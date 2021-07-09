@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel = "stylesheet" href = "{{url_for('static', filename='main.css')}}">
+    <script src="{{url_for('static', filename='globals.js')}}"></script>
+  </head>
+  <body>
+    <main>
+      
+      
+      <div class = "container login-container">
+        <form id = "main-login-form">
+          <div class = "login-input-container">
+            <label for = "login_email">Enter your email address:</label>
+            <input type = "email" name = "login_email">
+          </div>
+          <br/>
+          <div class = "login-input-container">
+            <label for = "login_agency">Enter your agency:</label>
+            <input type = "agency" name = "login_agency">
+          </div>
+          <br>
+          <div class = "login-input-container">
+            <button type="submit">Sign in</button>
+          </div>
+        </form>
+      </div>
+
+
+      <div class = "before-submit">
+        <div class = "container file-form-container">
+          <form id = "file-submission-form">
+            <input type = "file" name = "files" multiple>
+            <button type="submit">submit data</button>
+          </form>
+        </div>
+
+        <button id="session-reset">Start New Session</button>
+      </div>
+      <div class = "after-submit hidden">
+        <div class = "container form-container final-submit-button-container hidden">
+          <form id = "final-submit">
+            <button type="submit">final submit</button>
+          </form>
+        </div>
+      </div>
+
+
+      <div>
+
+      </div>
+    </main>
+  </body>
+
+  <!--Load js at the end rather than doing something similar to $('document').ready()-->
+  <script src="{{url_for('static', filename='login.js')}}"></script>
+</html>
