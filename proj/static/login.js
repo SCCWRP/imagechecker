@@ -53,6 +53,8 @@
             }
         }
         
+        window.location = `/${script_root}/report`;
+        
         // we can possibly validate the email address on the python side and return a message in "result"
         // and handle the situation accordingly
         //document.querySelector(".file-form-container").classList.add("hidden");
@@ -60,10 +62,6 @@
     })
 
     document.getElementById("session-reset").addEventListener("click", async function(){
-        const response = await fetch(`/${script_root}/reset`, {method: 'post'});
-        console.log(response);
-        const result = await response.json();
-        console.log(result);
         window.location = `/${script_root}`;
     })
 

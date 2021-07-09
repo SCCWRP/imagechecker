@@ -7,10 +7,9 @@
   <body>
     <main>
       
-      
       <div class = "container login-container">
         <form id = "main-login-form">
-          <div class = "login-input-container">
+          <!-- <div class = "login-input-container">
             <label for = "login_email">Enter your email address:</label>
             <input type = "email" name = "login_email">
           </div>
@@ -19,18 +18,18 @@
             <label for = "login_agency">Enter your agency:</label>
             <input type = "agency" name = "login_agency">
           </div>
-          <br>
+          <br> -->
           <div class = "login-input-container">
-            <button type="submit">Sign in</button>
+            <button type="submit">Start</button>
           </div>
         </form>
       </div>
 
 
-      <div class = "before-submit">
-        <div class = "container file-form-container">
-          <form id = "file-submission-form">
-            <input type = "file" name = "files" multiple>
+      <div class="before-submit">
+        <div class="container file-form-container">
+          <form id="file-submission-form" action="/imagechecker/upload" enctype="multipart/form-data" method="post" target="_blank">
+            <input type="file" name="files" multiple>
             <button type="submit">submit data</button>
           </form>
         </div>

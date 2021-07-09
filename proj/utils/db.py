@@ -1,6 +1,5 @@
 import re
-from pandas import read_sql, Timestamp, isnull
-
+from pandas import read_sql, Timestamp, isnull, DataFrame
 
 def check_dtype(t, x):
     try:
@@ -9,26 +8,20 @@ def check_dtype(t, x):
     except Exception as e:
         return False
 
-class GeoDBDataFrame(pd.DataFrame):
-    def __init__(self, eng, *args, **kwargs):
-        super(GeoDBDataFrame, self).__init__(*args, **kwargs)
-        self.eng = eng
 
+class GeoDBDataFrame(DataFrame):
+    def __init__(self, *args, **kwargs):
+        super(GeoDBDataFrame, self).__init__(*args, **kwargs)
+        
     @property
     def _constructor(self):
         return(GeoDBDataFrame)
 
-    def to_geodb(self, tablename):
-        tbl_cols = read_sql(f"SELECT * FROM information_schema.columns WHERE table_name = '{tablename}';", self.eng) \
+    def to_geodb(self, tablename, eng):
+        tbl_cols = read_sql(f"SELECT * FROM information_schema.columns WHERE table_name = '{tablename}';", eng) \
             .column_name \
             .tolist()
 
-        # For our checker application we should definitely enforce all columns being the same.
-        # Thus we will make these assert statements for faster troubleshooting and debugging.
-        assert set(self.columns) - set(tbl_cols) == set(), \
-            f"Dataframe has columns not found in table {tablename}: {','.join(set(self.columns) - set(tbl_cols))}"
-        assert set(tbl_cols) - set(self.columns) == set(), \
-            f"Table {tablename} has columns not found in Dataframe: {','.join(set(tbl_cols) - set(self.columns))}"
 
         if not self.empty:
             # this used to have ON CONFLICT ON CONSTRAINT (prinary key) DO NOTHING
@@ -72,7 +65,7 @@ class GeoDBDataFrame(pd.DataFrame):
                 ) \
                 .replace("%","%%")
 
-            self.eng.execute(finalsql)
+            eng.execute(finalsql)
         else:
             print("Nothing to load.")
 
