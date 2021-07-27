@@ -1,11 +1,10 @@
 from flask import render_template, request, jsonify, current_app, Blueprint, session
 from werkzeug.utils import secure_filename
 from glob import glob
-import os, time, json, cv2
+import os, time, json, pika
 import pandas as pd
 
 # custom imports, from local files
-from .imgutils.functions import crop_qr
 from .utils.html import htmltable
 
 homepage = Blueprint('homepage', __name__)
@@ -74,21 +73,85 @@ def upload():
     # Here in an excel submission we figure out what datatype they are submitting for
     # In this stage we can identify which objects are in the image
 
-    # Here instead we will attempt to extract the QR codes from the image
-    for im in ( glob(os.path.join(session['submission_dir'], "*.jpg")) + glob(os.path.join(session['submission_dir'], "*.png"))):
-        max_cropnumber = crop_qr(im, os.path.join(session['submission_dir'], "crops") )
-    
-    session['n_crops'] = max_cropnumber
+
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(host='rabbitmq')
+    )
+    channel = connection.channel()
+
+    channel.queue_declare(queue='obj_detect')
+
+    # ----- Send message and listen for response from rabbit mq ----- #
+
+    f = open(os.path.join(session.get("submission_dir"), "status.json"), 'w')
+    try:
+        f.write(json.dumps({
+            "status":"sent"
+        }))
+        msgbody = json.dumps({
+            "submission_dir": session.get("submission_dir"),
+            "originalphoto": session.get("originalphoto")
+        })
+        channel.basic_publish(
+            exchange = '', 
+            routing_key = 'obj_detect', 
+            body = msgbody
+        )
+        print(f"Sent {msgbody}")
+        connection.close()
+    except Exception as e:
+        print(e)
+        print("Something went wrong sending the data to rabbitmq")
+        raise Exception(e)
+    f.close()
+
+    import time
+
+    # 300 seconds = 5 minutes
+    timeout = time.time() + 300
+
+    while time.time() < timeout:
+        time.sleep(1) # dont want to use excessive CPU recources
+        f = open(os.path.join(session.get("submission_dir"), "status.json"), 'r')
+        response = json.loads(f.read())
+        f.close()
+        assert response.get("status") in ("sent","done","error"), \
+            f"Invalid status message {response.get('status')} in the status file"
+        if response.get('status') == "done":
+            break
+        elif response.get("status") == "error":
+            raise Exception(response.get("errmsg"))
+    session['markedphotopath'] = response.get('markedphoto')
+    session['markedphoto'] = \
+        response.get('markedphoto').rsplit('/', 1)[-1] \
+        if response.get('markedphoto') is not None else ''
+
+
+
 
     # ----------------------------------------- #
 
 
+    # data = pd.DataFrame({
+    #     "objectid"        : [i for i in range(max_cropnumber)],
+    #     "submissionid"      : [session['submissionid'] for i in range(max_cropnumber)],
+    #     "originalphotoname" : [session['originalphoto'] for i in range(max_cropnumber)],
+    #     "cropnumber"        : [i + 1 for i in range(max_cropnumber)]
+    # })
     data = pd.DataFrame({
-        "objectid"        : [i for i in range(max_cropnumber)],
-        "submissionid"      : [session['submissionid'] for i in range(max_cropnumber)],
-        "originalphotoname" : [session['originalphoto'] for i in range(max_cropnumber)],
-        "cropnumber"        : [i + 1 for i in range(max_cropnumber)]
-    })
+        "objectid"   : "sde.next_rowid('sde','tablename')",
+        "cropnumber" : [i for i in response.get("boundingboxes").keys()],
+        "minx"       : [response.get("boundingboxes").get(i)[0] for i in response.get("boundingboxes").keys()],
+        "miny"       : [response.get("boundingboxes").get(i)[1] for i in response.get("boundingboxes").keys()],
+        "maxx"       : [response.get("boundingboxes").get(i)[2] for i in response.get("boundingboxes").keys()],
+        "maxy"       : [response.get("boundingboxes").get(i)[3] for i in response.get("boundingboxes").keys()],
+    }) \
+    .assign(
+        submissionid = session.get('submissionid'),
+        originalphoto = session.get('originalphoto'),
+        **session.get('login_info')
+    )
+
     data.to_excel( os.path.join(session['submission_dir'], "data", "data.xlsx") )
     
     htmlfile = open( os.path.join(session['submission_dir'], "data", "data.html" ) , 'w')
@@ -100,7 +163,7 @@ def upload():
     json_response = {
         "submissionid": session['submissionid'], 
         "originalphoto": session['originalphoto'],
-        "n_crops": max_cropnumber
+        "markedphoto" : session.get("markedphoto")
     }
     print(json_response)
     return jsonify(**json_response)

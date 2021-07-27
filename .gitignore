@@ -2,4 +2,7 @@ files
 docker
 export
 logs
+testing
+proj/imgutils/saved_model
+proj/imgutils/fish_inception_v2_graph
 .vscode

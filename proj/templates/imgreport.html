@@ -12,12 +12,10 @@
       </div>
 
       <div class = "cropped-img-outer-container">
-        {%for n in cropnumbers%}
           <div class = "cropped-img-container">
-            <div><span>Crop {{n}}</span></div>
-            <img src="https://mpchecker.sccwrp.org/imagechecker/media?originalphoto={{originalphoto}}&submissionid={{submissionid}}&crop={{n}}">
+            <div><span>Marked Picture</span></div>
+            <img src="https://mpchecker.sccwrp.org/imagechecker/media?photo={{markedphoto}}&submissionid={{submissionid}}&crop={{n}}">
           </div>
-        {%endfor%}
       </div>
 
       <div class="final-submit-container">

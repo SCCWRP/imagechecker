@@ -8,12 +8,12 @@ def getreport():
     data = htmlfile.read()
     htmlfile.close()
 
-    if session['n_crops'] > 0:
+    if session.get('markedphoto'):
         return render_template(
             "imgreport.html",
-            submissionid = session['submissionid'], 
-            originalphoto = session['originalphoto'], 
-            cropnumbers = [i + 1 for i in range(session['n_crops'])],
+            submissionid = session.get('submissionid'), 
+            originalphoto = session.get('originalphoto'), 
+            markedphoto = session.get('markedphoto'),
             data = data
         )
     else:
