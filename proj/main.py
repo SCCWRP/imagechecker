@@ -139,7 +139,7 @@ def upload():
     #     "cropnumber"        : [i + 1 for i in range(max_cropnumber)]
     # })
     data = pd.DataFrame({
-        "objectid"   : "sde.next_rowid('sde','tablename')",
+        "objectid"   : [i for i in response.get("boundingboxes").keys()],
         "cropnumber" : [i for i in response.get("boundingboxes").keys()],
         "minx"       : [response.get("boundingboxes").get(i)[0] for i in response.get("boundingboxes").keys()],
         "miny"       : [response.get("boundingboxes").get(i)[1] for i in response.get("boundingboxes").keys()],
