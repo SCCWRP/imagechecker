@@ -29,14 +29,17 @@ def load():
 
     data.to_geodb(table, eng)
 
-    msgbody = "Successful Image Data Submission\n\n"
+    msgbody = f"Successful Image Data {'Submission' if session.get('login_info') else 'Update'}\n\n"
     msgbody += f"SubmissionID: {submissionid}\n\n"
     msgbody += f"Login Information:\n\t"
-    for k, v in session.get('login_info').items():
-            msgbody += f"{k}: {v}\n\t"
+    if session.get('login_info'):
+        for k, v in session.get('login_info').items():
+                msgbody += f"{k}: {v}\n\t"
+    recipients = current_app.maintainers
+    recipients += [session.get('login_info').get('login_email')] if session.get('login_info') else []
     send_mail(
         current_app.send_from,
-        [*current_app.maintainers, session.get('login_info').get('login_email')],
+        recipients,
         f"Successful Image Data Submission - ID#{submissionid}", 
         msgbody,
         server = current_app.config['MAIL_SERVER']
@@ -57,8 +60,9 @@ def finalsubmit_error_handler(error):
     msgbody = "Image checker crashed\n\n"
     msgbody += f"Error message: {error}\n\n"
     msgbody += f"Login Information:\n\t"
-    for k, v in session.get('login_info').items():
-            msgbody += f"{k}: {v}\n\t"
+    if session.get('login_info') is not None:
+        for k, v in session.get('login_info').items():
+                msgbody += f"{k}: {v}\n\t"
     send_mail(
         current_app.send_from,
         current_app.maintainers,

@@ -1,5 +1,15 @@
 from pandas import isnull
 
+def stacktrace_helper(func, *args, **kwargs):
+    def wrap(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            print(e)
+            raise Exception(f"Error in {func.__name__} - {e}")
+    return wrap
+
+@stacktrace_helper
 def htmltable(df, editable_fields = [], cssid = None, cssclass = None, enumeraterows = True):
     '''
         df is a pandas dataframe, 

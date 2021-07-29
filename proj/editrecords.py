@@ -18,7 +18,7 @@ def display_records(submissionid):
         data = htmltable(rawdata, cssclass="table", editable_fields=('length','width','area','speciesid'))
 
         markedphotos = [
-            ''.join([str(x).rsplit('.', 1)[0], '-marked.' ,str(x).rsplit('.', 1)[-1]] for x in rawdata.originalphoto.unique())
+            ''.join([str(x).rsplit('.', 1)[0], '-marked.jpg']) for x in rawdata.originalphoto.unique()
         ]
         return render_template('editrecords.html', data=data, submissionid=submissionid, markedphotos=markedphotos)
     else:
@@ -55,9 +55,10 @@ def editor_error_handler(error):
     }
     msgbody = "Image checker crashed\n\n"
     msgbody += f"Error message: {error}\n\n"
-    msgbody += f"Login Information:\n\t"
-    for k, v in session.get('login_info').items():
-            msgbody += f"{k}: {v}\n\t"
+    if session.get('login_info'):
+        msgbody += f"Login Information:\n\t"
+        for k, v in session.get('login_info').items():
+                msgbody += f"{k}: {v}\n\t"
     send_mail(
         current_app.send_from,
         current_app.maintainers,
