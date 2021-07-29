@@ -8,6 +8,7 @@ from .match import match_file
 from .media import media
 from .report import report
 from .load import finalsubmit
+from .editrecords import editor
 
 
 
@@ -34,3 +35,4 @@ app.register_blueprint(match_file)
 app.register_blueprint(media)
 app.register_blueprint(report)
 app.register_blueprint(finalsubmit)
+app.register_blueprint(editor)
