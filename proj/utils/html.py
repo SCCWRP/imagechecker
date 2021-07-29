@@ -1,6 +1,6 @@
 from pandas import isnull
 
-def htmltable(df, cssid = None, cssclass = None, enumeraterows = True):
+def htmltable(df, editable_fields = [], cssid = None, cssclass = None, enumeraterows = True):
     '''
         df is a pandas dataframe, 
         id is a css id you want to give to the table, 
@@ -71,14 +71,24 @@ def htmltable(df, cssid = None, cssclass = None, enumeraterows = True):
                                     ) 
                                     
                                     if 
-                                        cell.get('column_name') != 'objectid' 
+                                        # hmmm it looks like i might be able to modify the function to take in a tuple of columns we dont want edited
+                                        # Just something to think about if we end up constantly implementing editable tables or something like that
+                                        cell.get('column_name') in editable_fields
+                                    
+                                    else
+                                        '<td class="colname-{}" onkeypress="enterUnfocus(event, this)">{}</td>' \
+                                        .format(
+                                            cell.get('column_name'), 
+                                            cell.get('column_value') if not (isnull(cell.get('column_value')) or ("sde.next_rowid" in str(cell.get('column_value'))) ) else ''
+                                        )
+                                    if cell.get('column_name') != 'objectid'
+
                                     else
                                         '<td class="colname-{}" onkeypress="enterUnfocus(event, this)">{}</td>' \
                                         .format(
                                             cell.get('column_name'), 
                                             int(cell.get('column_value')) if not (isnull(cell.get('column_value')) or ("sde.next_rowid" in str(cell.get('column_value'))) ) else ''
                                         )
-                                    
                                     , row
                                 )
                             )

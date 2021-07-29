@@ -28,6 +28,14 @@
                 <div class="data-container">
                   {{data|safe}}
                 </div>
+                <div class="row">
+                  <div id="save-changes-button-container" class="col-sm">
+                    <button class="btn btn-primary" id="save-changes-button" onclick="saveChanges()">Save changes in session</button>
+                  </div>
+                  <div id="final-submit-container" class="col-sm">
+                    <button class="btn btn-success" id="final-submit-button">Upload changes to database</button>
+                  </div>
+                </div>
               </div>
             </div>
             <br>
@@ -43,9 +51,6 @@
               </div>
             </div>
             <br>
-            <div class="final-submit-container">
-              <button class="btn btn-success btn-lg" id="final-submit-button">Save changes</button>
-            </div>
 
           </div>
 
@@ -57,5 +62,6 @@
 
 <!--Load js at the end rather than doing something similar to $('document').ready()-->
 <script src="{{url_for('static', filename='report.js')}}"></script>
+<script src="{{url_for('static', filename='saveChanges.js')}}"></script>
 
 </html>

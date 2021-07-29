@@ -143,9 +143,10 @@ def upload():
         "min_y"       : [round(response.get("boundingboxes").get(i)[0], 4) for i in response.get("boundingboxes").keys()],
         "min_x"       : [round(response.get("boundingboxes").get(i)[1], 4) for i in response.get("boundingboxes").keys()],
         "max_y"       : [round(response.get("boundingboxes").get(i)[2], 4) for i in response.get("boundingboxes").keys()],
-        "max_x"       : [round(response.get("boundingboxes").get(i)[3], 4) for i in response.get("boundingboxes").keys()],
+        "max_x"       : [round(response.get("boundingboxes").get(i)[3], 4) for i in response.get("boundingboxes").keys()]
     }) \
     .assign(
+        speciesid = "",
         submissionid = session.get('submissionid'),
         originalphoto = session.get('originalphoto'),
         **session.get('login_info')
@@ -154,7 +155,7 @@ def upload():
     data.to_excel( os.path.join(session['submission_dir'], "data", "data.xlsx") )
     
     htmlfile = open( os.path.join(session['submission_dir'], "data", "data.html" ) , 'w')
-    htmlfile.write(htmltable(data, cssclass="table"))
+    htmlfile.write(htmltable(data, cssclass="table", editable_fields=('length','width','area','speciesid')))
     htmlfile.close()
 
 

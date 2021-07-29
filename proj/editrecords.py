@@ -10,18 +10,38 @@ from .utils.html import htmltable
 from .utils.mail import send_mail
 
 editor = Blueprint('editor', __name__)
-@editor.route('/edit-submission/<submissionid>')
+@editor.route('/edit-submission/<submissionid>', methods = ['GET','POST'])
 def display_records(submissionid):
     if submissionid:
+        session['submissionid'] = str(submissionid)
         rawdata = pd.read_sql(f"SELECT * FROM tbl_testfish WHERE submissionid = {submissionid}", current_app.eng)
-        data = htmltable(rawdata, cssclass="table")
+        data = htmltable(rawdata, cssclass="table", editable_fields=('length','width','area','speciesid'))
 
         markedphotos = [
-            ''.join([str(x).rsplit('.', 1)[0], '-marked.' ,str(x).rsplit('.', 1)[-1]]) for x in rawdata.originalphoto.unique()
+            ''.join([str(x).rsplit('.', 1)[0], '-marked.' ,str(x).rsplit('.', 1)[-1]] for x in rawdata.originalphoto.unique())
         ]
         return render_template('editrecords.html', data=data, submissionid=submissionid, markedphotos=markedphotos)
     else:
         return jsonify(message="No submissionid provided")
+
+
+@editor.route('/savechanges', methods = ['GET','POST'])
+def savechanges():
+    
+    data = pd.DataFrame(request.get_json())
+
+    submissionid = str(session.get('submissionid'))
+    assert submissionid, "No submissionid provided (in savechanges routine)" 
+    
+    data.to_excel(os.path.join(os.getcwd(), "files", submissionid, "data", "data.xlsx"))
+
+    htmlfile = open( os.path.join(session['submission_dir'], "data", "data.html" ) , 'w')
+    htmlfile.write(htmltable(data, cssclass="table", editable_fields=('length','width','area','speciesid')))
+    htmlfile.close()
+    
+    return jsonify(message="data saved successfully")
+
+
 
 
 # When an exception happens when the browser is sending requests to the editor blueprint, this routine runs
