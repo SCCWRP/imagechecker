@@ -5,19 +5,33 @@
 body {
     font-family: sans-serif;
 }
-
-.container {
-    padding: 0.1rem;
-}
-
-.container.login-container {
-    margin: auto;
-    width: 40%;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 9;
-    color: rgb(228, 245, 243);
+body::after {
+    content: "";
+    background: url(imrecbkgd.png) no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
     position: absolute;
-    left: 30%;
+    z-index: -1;   
+  }
+
+/* .main-outer-container {
+    position: relative;
+} */
+
+.container.main-inner-container {
+    margin: auto;
+    width: 60%;
+    background-color: rgba(254, 254, 255, 0.8);
+    z-index: 9;
+    color: rgb(7, 7, 7);
+    position: absolute;
+    left: 20%;
     top:25%;
     box-shadow: 0.3rem 0.3rem 0.3rem rgba(0, 8, 7, 0.5);
     padding: 0.4rem;

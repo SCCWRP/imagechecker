@@ -1,56 +1,57 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <link rel = "stylesheet" href = "{{url_for('static', filename='main.css')}}">
-    <script src="{{url_for('static', filename='globals.js')}}"></script>
-  </head>
-  <body>
-    <main>
-      
-      <div class = "container login-container">
-        <form id = "main-login-form">
-          <!-- <div class = "login-input-container">
-            <label for = "login_email">Enter your email address:</label>
-            <input type = "email" name = "login_email">
-          </div>
-          <br/>
-          <div class = "login-input-container">
-            <label for = "login_agency">Enter your agency:</label>
-            <input type = "agency" name = "login_agency">
-          </div>
-          <br> -->
-          <div class = "login-input-container">
-            <button type="submit">Start</button>
-          </div>
-        </form>
-      </div>
 
+<head>
+  <link rel="stylesheet" href="{{url_for('static', filename='main.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='bootstrap.min.css')}}">
+  <script src="{{url_for('static', filename='globals.js')}}"></script>
+</head>
 
-      <div class="before-submit">
-        <div class="container file-form-container">
-          <form id="file-submission-form" action="/imagechecker/upload" enctype="multipart/form-data" method="post" target="_blank">
-            <input type="file" name="files" multiple>
-            <button type="submit">submit data</button>
-          </form>
+<body>
+  <main>
+    <div class="container main-outer-container">
+
+      <div class="container card main-inner-container">
+        <div class="card-header">
+          Image Recognition Checker
         </div>
+        <div class="card-body">
 
-        <button id="session-reset">Start New Session</button>
-      </div>
-      <div class = "after-submit hidden">
-        <div class = "container form-container final-submit-button-container hidden">
-          <form id = "final-submit">
-            <button type="submit">final submit</button>
-          </form>
+          <div class="before-submit">
+
+            <div class="container file-form-container">
+              <form id="file-submission-form" action="/imagechecker/upload" enctype="multipart/form-data" method="post"
+                target="_blank">
+                <div class="row">
+
+                  <div class="col-sm">
+
+                    <input type="file" name="files" class="form-control-file" multiple>
+                  </div>
+                  <div class="col-sm">
+                    <button class="btn btn-dark" type="submit">submit data</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+
+          </div>
+          <div class="after-submit hidden">
+            <div class="container form-container final-submit-button-container hidden">
+              <form id="final-submit">
+                <button class="btn btn-success" type="submit">final submit</button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  </main>
+</body>
 
+<!--Load js at the end rather than doing something similar to $('document').ready()-->
+<script src="{{url_for('static', filename='login.js')}}"></script>
+<script src="{{url_for('static', filename='dragndrop.js')}}"></script>
 
-      <div>
-
-      </div>
-    </main>
-  </body>
-
-  <!--Load js at the end rather than doing something similar to $('document').ready()-->
-  <script src="{{url_for('static', filename='login.js')}}"></script>
 </html>

@@ -21,15 +21,6 @@ def index():
 
 
 
-@homepage.route('/login', methods = ['GET','POST'])
-def login():
-
-    login_info = dict(request.form)
-    print(login_info)
-    session['login_info'] = login_info
-
-    return jsonify(msg="login successful")
-
 
     
 @homepage.route('/upload',methods = ['GET','POST'])
@@ -120,6 +111,7 @@ def upload():
         if response.get('status') == "done":
             break
         elif response.get("status") == "error":
+            print("Error in the routine of processing the image - from the RabbitMQ consumer")
             raise Exception(response.get("errmsg"))
     session['markedphotopath'] = response.get('markedphoto')
     session['markedphoto'] = \
@@ -148,8 +140,7 @@ def upload():
     }) \
     .assign(
         submissionid = session.get('submissionid'),
-        originalphoto = session.get('originalphoto'),
-        **session.get('login_info')
+        originalphoto = session.get('originalphoto')
     )
 
     data.to_excel( os.path.join(session['submission_dir'], "data", "data.xlsx") )
