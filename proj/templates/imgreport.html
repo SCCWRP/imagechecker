@@ -1,30 +1,64 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <link rel = "stylesheet" href = "{{url_for('static', filename='main.css')}}">
-    <script src="{{url_for('static', filename='globals.js')}}"></script>
-  </head>
-  <body>
-    <main>
-      
-      <div class = "data-container">
-        {{data|safe}}
-      </div>
 
-      <div class = "cropped-img-outer-container">
-          <div class = "cropped-img-container">
-            <div><span>Marked Picture</span></div>
-            <img src="https://mpchecker.sccwrp.org/imagechecker/media?photo={{markedphoto}}&submissionid={{submissionid}}&crop={{n}}">
+<head>
+  <link rel="stylesheet" href="{{url_for('static', filename='main.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='bootstrap.min.css')}}">
+  <script src="{{url_for('static', filename='globals.js')}}"></script>
+</head>
+
+<body>
+  <main>
+    <div class="outer-report-container">
+
+      <div class="inner-report-container">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="card-title">
+              Image Submission Report
+            </h4>
           </div>
+          <div class="card-body">
+
+            <div class="card">
+              <div class="card-header">
+                Data extrapolated from image
+              </div>
+              <div class="card-body">
+                <div class="data-container">
+                  {{data|safe}}
+                </div>
+              </div>
+            </div>
+            <br>
+            <div class="card">
+              <div class="card-header">
+                Marked Image
+              </div>
+              <div class="card-body">
+                <div class="cropped-img-outer-container">
+                  <div class="cropped-img-container">
+                    <div><span>Marked Picture</span></div>
+                    <img
+                      src="https://mpchecker.sccwrp.org/imagechecker/media?photo={{markedphoto}}&submissionid={{submissionid}}&crop={{n}}">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br>
+            <div class="final-submit-container">
+              <button class="btn btn-success btn-lg" id="final-submit-button">Load Data to table</button>
+            </div>
+
+          </div>
+
+        </div>
       </div>
+    </div>
+  </main>
+</body>
 
-      <div class="final-submit-container">
-        <button id="final-submit-button">Load Data to table</button>
-      </div>
+<!--Load js at the end rather than doing something similar to $('document').ready()-->
+<script src="{{url_for('static', filename='report.js')}}"></script>
 
-    </main>
-  </body>
-
-  <!--Load js at the end rather than doing something similar to $('document').ready()-->
-  <script src="{{url_for('static', filename='report.js')}}"></script>
 </html>

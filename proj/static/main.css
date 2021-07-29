@@ -46,3 +46,21 @@ body::after {
 .hidden {
     display: none;
 }
+
+.data-container {
+    background-color: rgba(254, 254, 255, 0.8);
+}
+.container {
+    background-color: rgba(254, 254, 255, 0.8);
+}
+.card {
+    background-color: rgba(254, 254, 255, 0.8);
+}
+
+div.row.file-form-row {
+    background-color: rgba(255,255,255,0);
+}
+
+.container#login-form-container {
+    padding: 2rem;
+}

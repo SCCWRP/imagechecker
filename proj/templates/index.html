@@ -16,13 +16,25 @@
           Image Recognition Checker
         </div>
         <div class="card-body">
+          <div class="container" id="login-form-container">
+            <form id="login-form" method="post">
+              <div class="form-group-container">
 
-          <div id="file-submit-form-container" class="before-submit">
+                <label for="login_email">Email Address:</label>
+                <input type="email" name="login_email" id="login_email" class="form-control-email" placeholder="name@example.com">
+              </div>
+              <br>
+              <div class="form-group-container">
+                <button class="btn btn-dark" type="submit">Sign in</button>
+              </div>
+            </form>
+          </div>
 
+          <div id="file-submit-form-container" class="before-submit hidden">
             <div class="container file-form-container">
               <form id="file-submission-form" action="/imagechecker/upload" enctype="multipart/form-data" method="post"
                 target="_blank">
-                <div class="row">
+                <div class="row file-form-row">
 
                   <div class="col-sm">
 

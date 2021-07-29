@@ -20,7 +20,11 @@ def index():
     return render_template('index.html')
 
 
-
+@homepage.route('/login', methods = ['GET','POST'])
+def login():
+    login_info = dict(request.form)
+    session['login_info'] = login_info
+    return jsonify(msg="logged in successfully")
 
     
 @homepage.route('/upload',methods = ['GET','POST'])
@@ -133,20 +137,21 @@ def upload():
     data = pd.DataFrame({
         "objectid"   : [i for i in response.get("boundingboxes").keys()],
         "cropnumber" : [i for i in response.get("boundingboxes").keys()],
-        "minx"       : [response.get("boundingboxes").get(i)[0] for i in response.get("boundingboxes").keys()],
-        "miny"       : [response.get("boundingboxes").get(i)[1] for i in response.get("boundingboxes").keys()],
-        "maxx"       : [response.get("boundingboxes").get(i)[2] for i in response.get("boundingboxes").keys()],
-        "maxy"       : [response.get("boundingboxes").get(i)[3] for i in response.get("boundingboxes").keys()],
+        "min_y"       : [round(response.get("boundingboxes").get(i)[0], 4) for i in response.get("boundingboxes").keys()],
+        "min_x"       : [round(response.get("boundingboxes").get(i)[1], 4) for i in response.get("boundingboxes").keys()],
+        "max_y"       : [round(response.get("boundingboxes").get(i)[2], 4) for i in response.get("boundingboxes").keys()],
+        "max_x"       : [round(response.get("boundingboxes").get(i)[3], 4) for i in response.get("boundingboxes").keys()],
     }) \
     .assign(
         submissionid = session.get('submissionid'),
-        originalphoto = session.get('originalphoto')
+        originalphoto = session.get('originalphoto'),
+        **session.get('login_info')
     )
 
     data.to_excel( os.path.join(session['submission_dir'], "data", "data.xlsx") )
     
     htmlfile = open( os.path.join(session['submission_dir'], "data", "data.html" ) , 'w')
-    htmlfile.write(htmltable(data))
+    htmlfile.write(htmltable(data, cssclass="table"))
     htmlfile.close()
 
 

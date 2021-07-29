@@ -1,6 +1,22 @@
 (function(){
     fileForm = document.getElementById("file-submission-form");
+    loginForm = document.getElementById("login-form");
 
+    loginForm.addEventListener("submit", async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('login_email', document.querySelector('#login_email').value);
+        const response = await fetch(`/${script_root}/login`, {
+            method: 'post',
+            body: formData
+        });
+        const result = await response.json();
+        console.log(result);
+        document.querySelector('#login-form-container').classList.add('hidden');
+        document.querySelector('#file-submit-form-container').classList.remove('hidden');
+    })
+    
     
 
     // routine for submitting the file(s)

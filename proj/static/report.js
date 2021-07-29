@@ -12,7 +12,7 @@
 
         alert(result.user_notification);
 
-        finalSubmitButton.classlist.add("hidden");
+        window.location = `/${script_root}`;
 
     })
 
