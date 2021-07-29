@@ -26,6 +26,9 @@ app.secret_key = 'any random string'
 # set the database connection string, database, and type of database we are going to point our application at
 app.eng = create_engine(environ.get("DB_CONNECTION_STRING"))
 
+app.send_from = 'admin@checker.sccwrp.org'
+app.maintainers = ['robertb@sccwrp.org']
+
 app.register_blueprint(homepage)
 app.register_blueprint(match_file)
 app.register_blueprint(media)

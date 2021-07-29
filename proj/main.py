@@ -1,11 +1,13 @@
 from flask import render_template, request, jsonify, current_app, Blueprint, session
 from werkzeug.utils import secure_filename
 from glob import glob
+from inspect import currentframe
 import os, time, json, pika
 import pandas as pd
 
 # custom imports, from local files
 from .utils.html import htmltable
+from .utils.mail import send_mail
 
 homepage = Blueprint('homepage', __name__)
 @homepage.route('/')
@@ -23,6 +25,7 @@ def index():
 @homepage.route('/login', methods = ['GET','POST'])
 def login():
     login_info = dict(request.form)
+    assert 'login_email' in login_info.keys(), "There is no login_email field in the login form"
     session['login_info'] = login_info
     return jsonify(msg="logged in successfully")
 
@@ -157,10 +160,33 @@ def upload():
 
     print("DONE with upload routine, returning JSON to browser")
     json_response = {
-        "submissionid": session['submissionid'], 
-        "originalphoto": session['originalphoto'],
-        "markedphoto" : session.get("markedphoto")
+        "submissionid" :  session['submissionid'], 
+        "originalphoto":  session['originalphoto'],
+        "markedphoto"  :  session.get("markedphoto")
     }
     print(json_response)
     return jsonify(**json_response)
 
+
+# When an exception happens when the browser is sending requests to the homepage blueprint, this routine runs
+@homepage.errorhandler(Exception)
+def homepage_error_handler(error):
+    print(f"Exception occurred in {currentframe().f_code.co_name}")
+    print(str(error))
+    response = {
+        "message": "Internal Server Error",
+        "error"  : str(error)
+    }
+    msgbody = "Image checker crashed\n\n"
+    msgbody += f"Error message: {error}\n\n"
+    msgbody += f"Login Information:\n\t"
+    for k, v in session.get('login_info').items():
+            msgbody += f"{k}: {v}\n\t"
+    send_mail(
+        current_app.send_from,
+        current_app.maintainers,
+        "Image Checker Internal Server Error", 
+        msgbody,
+        server = current_app.config['MAIL_SERVER']
+    )
+    return jsonify(**response)
