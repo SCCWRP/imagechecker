@@ -17,10 +17,13 @@ in order to allow the drag and drop functionality to work
     document.querySelector("body").addEventListener('drop', function(event){
         event.stopPropagation();
         event.preventDefault();
-        
+
         const dropped_files = event.dataTransfer.files;
         document.querySelector('#file-submission-form input.form-control-file').files = dropped_files;
         document.querySelector('#file-submission-form').requestSubmit();
+
+        document.querySelector('#file-submit-form-container').classList.add('hidden')
+        document.querySelector('#loader-gif-container').classList.remove('hidden')
     });
 
 })()
