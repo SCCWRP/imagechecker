@@ -38,6 +38,8 @@ def load():
     if session.get('login_info'):
         for k, v in session.get('login_info').items():
                 msgbody += f"{k}: {v}\n\t"
+    msgbody += '\nEdit records at\n'
+    msgbody += f'https://mpchecker.sccwrp.org/imagechecker/edit-submission/{submissionid}'
     recipients = current_app.maintainers
     recipients += [session.get('login_info').get('login_email')] if session.get('login_info') else []
     send_mail(
