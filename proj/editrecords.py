@@ -35,7 +35,7 @@ def savechanges():
     
     data.to_excel(os.path.join(os.getcwd(), "files", submissionid, "data", "data.xlsx"))
 
-    htmlfile = open( os.path.join(session['submission_dir'], "data", "data.html" ) , 'w')
+    htmlfile = open( os.path.join(os.getcwd(), "files", submissionid, "data", "data.html" ) , 'w')
     htmlfile.write(htmltable(data, cssclass="table", editable_fields=('length','width','area','speciesid')))
     htmlfile.close()
     

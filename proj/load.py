@@ -27,6 +27,9 @@ def load():
 
     data = GeoDBDataFrame(data)
 
+    if data.submissionid.values[0] in pd.read_sql(f"SELECT DISTINCT submissionid FROM {table}", eng).submissionid.values:
+        eng.execute(f"DELETE FROM {table} WHERE submissionid = {submissionid};")
+
     data.to_geodb(table, eng)
 
     msgbody = f"Successful Image Data {'Submission' if session.get('login_info') else 'Update'}\n\n"
