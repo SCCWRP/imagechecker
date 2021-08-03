@@ -89,7 +89,7 @@ class Contour:
     def containsFish(self):
         im = cv2.cvtColor(self._original_image, cv2.COLOR_BGR2RGB)
         img_, boxes = self._fish_detector.detect_image(
-            im[self._min_x:self._max_x, self._min_y:self._max_y], score_thr=0.2
+            im[self._min_x:self._max_x, self._min_y:self._max_y], score_thr=0.4
         )
         return True if len(boxes) > 0 else False
     

@@ -29,11 +29,13 @@
         //document.querySelector(".records-display-inner-container").innerHTML = '<img src="/changerequest/static/loading.gif">';
         
         const dropped_files = document.querySelector('[type=file]').files;
+        const attempt_measurement = document.querySelector("#attempt_measurement").checked;
         const formData = new FormData();
         for(let i = 0; i < dropped_files.length; ++i){
             /* submit as array to as file array - otherwise will fail */
             formData.append('files[]', dropped_files[i]);
         }
+        formData.append('measure', attempt_measurement)
 
         const response = await fetch(`/${script_root}/upload`, {
             method: 'post',

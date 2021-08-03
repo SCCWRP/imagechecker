@@ -62,7 +62,7 @@ def upload():
 
     print("DONE uploading files")
 
-
+    
 
     # -------------------------------------------------------------------------- #
 
@@ -88,7 +88,11 @@ def upload():
         }))
         msgbody = json.dumps({
             "submission_dir": session.get("submission_dir"),
-            "originalphoto": session.get("originalphoto")
+            "originalphoto": session.get("originalphoto"),
+            
+            # Passing through a json i dont know how it will get parsed on the other side
+            # Otherwise I'd probably pass the regular boolean True
+            "measure": 'true' if (request.form.get('measure') == 'true') else 'false' 
         })
         channel.basic_publish(
             exchange = '', 
@@ -137,7 +141,7 @@ def upload():
 
     data.to_excel( os.path.join(session.get('submission_dir'), "data", "data.xlsx") )
     htmlfile = open( os.path.join(session.get('submission_dir'), "data", "data.html" ) , 'w')
-    htmlfile.write(htmltable(data, cssclass="table", editable_fields=('length','width','area','speciesid')))
+    htmlfile.write(htmltable(data, cssclass="table", editable_fields=('length','lengthunits','width','area','speciesid')))
     htmlfile.close()
 
 

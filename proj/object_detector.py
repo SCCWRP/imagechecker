@@ -5,7 +5,6 @@ from PIL import Image
 import time, pika, json, cv2, os, shutil
 import matplotlib.pyplot as plt
 
-from utils.html import htmltable
 from contours import Contour, Object_Detector
 
 def listen():
@@ -35,79 +34,105 @@ def listen():
                     data.get('originalphoto').rsplit('.',1)[-1]
                 )
             )
+            if data.get("measure") == 'true':
+                shutil.copy(originalphotopath, markedphotopath)
+                
+                img = cv2.imread(markedphotopath)
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-            shutil.copy(originalphotopath, markedphotopath)
-            
-            img = cv2.imread(markedphotopath)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            ret, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
+                attempts = 0
+                thresh_value = 150
+                while attempts < 2:
+                    ret, thresh = cv2.threshold(gray, thresh_value, 255, cv2.THRESH_BINARY_INV)
 
-            # Grab contours
-            contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                    # Grab contours
+                    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-            # filter down to ones between 200 and 2000 points, making the assumption that all else is pure noise
-            contours = [c for c in contours if (200 < len(c) < 2000)]
+                    # filter down to ones between 200 and 2000 points, making the assumption that all else is pure noise
+                    contours = [c for c in contours if (200 < len(c) < 2000)]
 
-            # Mark contours of interest on the image
-            cv2.drawContours(img, contours, -1, (0,255,0), 1)
+                    # Mark contours of interest on the image
+                    cv2.drawContours(img, contours, -1, (0,255,0), 1)
 
-            # Now the contours will become our customized Contour object
-            contours = [
-                Contour(
-                    points = c.reshape(c.shape[0],c.shape[-1]), 
-                    original_image = img, 
-                    output_photo_path = markedphotopath,
-                    detector = FISH_DETECTOR
-                ) 
-                for c in contours
-            ]
+                    # Now the contours will become our customized Contour object
+                    contours = [
+                        Contour(
+                            points = c.reshape(c.shape[0],c.shape[-1]), 
+                            original_image = img, 
+                            output_photo_path = markedphotopath,
+                            detector = FISH_DETECTOR
+                        ) 
+                        for c in contours
+                    ]
 
-            # Should be self explanatory
-            circles = [c for c in contours if c.isCircle()]
-            fish = [c for c in contours if (c.containsFish() and (not c.isCircle()) )]
+                    # Should be self explanatory
+                    circles = [c for c in contours if c.isCircle()]
+                    fish = [c for c in contours if (c.containsFish() and (not c.isCircle()) )]
 
-            # initialize the dataframe that we will append to
-            output_df = pd.DataFrame({"objectid" : [], "cropnumber" : [], "min_y" : [], "min_x" : [], "max_y" : [], "max_x" : [], "length": [], "lengthunits": []}) 
+                    if len(fish) > 0:
+                        break
+                    else:
+                        print("Failed with thresh value of {}".format(thresh_value))
+                        attempts += 1
+                        thresh_value = thresh_value - 50
 
-            # We are making an assumption that the circle contour is a quarter
-            if len(circles) != 1:
-                print("unable to measure")
-                cm_pixel_ratio = 1 # default placeholder. Not even sure if this should be here
-                lengthunits = "px"
-            else: 
-                cm_pixel_ratio = 2.426 / circles[0].getLength() # We assume the circle contour is a quarter, which is 2.426cm in diameter
-                lengthunits = "cm"
+                # initialize the dataframe that we will append to
+                output_df = pd.DataFrame({"objectid" : [], "cropnumber" : [], "min_y" : [], "min_x" : [], "max_y" : [], "max_x" : [], "length": [], "lengthunits": []}) 
 
-            # fc = fish contour
-            for i, fc in enumerate(fish):
-                fc.markBoundingBox()
-                fc.drawLength()
-                cv2.putText(
-                    img, 
-                    "fish {}".format(int(i)), 
-                    fc.length_coords[1], 
-                    cv2.FONT_HERSHEY_PLAIN, 
-                    1, 
-                    (0,0,255), 
-                    2
-                )
-                output_df = pd.concat(
-                    [
-                        output_df,
-                        pd.DataFrame({
-                            "objectid": [int(i)],
-                            "cropnumber": [int(i)],
-                            "min_x": [fc._min_x],
-                            "min_y": [fc._min_y],
-                            "max_x": [fc._max_x], 
-                            "max_y": [fc._max_y],
-                            "length": [round(fc.getLength() * cm_pixel_ratio, 2)],
-                            "lengthunits": lengthunits
-                        })
-                    ],
-                    ignore_index = True
-                )
+                # We are making an assumption that the circle contour is a quarter
+                if len(circles) != 1:
+                    print("unable to measure")
+                    cm_pixel_ratio = 1 # default placeholder. Not even sure if this should be here
+                    lengthunits = "px"
+                else: 
+                    cm_pixel_ratio = 2.426 / circles[0].getLength() # We assume the circle contour is a quarter, which is 2.426cm in diameter
+                    lengthunits = "cm"
+
+                # fc = fish contour
+                for i, fc in enumerate(fish):
+                    fc.markBoundingBox()
+                    fc.drawLength()
+                    cv2.putText(
+                        img, 
+                        "fish {}".format(int(i)), 
+                        fc.length_coords[1], 
+                        cv2.FONT_HERSHEY_PLAIN, 
+                        1, 
+                        (0,0,255), 
+                        2
+                    )
+                    output_df = pd.concat(
+                        [
+                            output_df,
+                            pd.DataFrame({
+                                "objectid": [int(i)],
+                                "cropnumber": [int(i)],
+                                "min_x": [fc._min_x],
+                                "min_y": [fc._min_y],
+                                "max_x": [fc._max_x], 
+                                "max_y": [fc._max_y],
+                                "length": [round(fc.getLength() * cm_pixel_ratio, 2)],
+                                "lengthunits": lengthunits
+                            })
+                        ],
+                        ignore_index = True
+                    )
+            else:
+                im = cv2.imread(originalphotopath)
+                im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+                img, boxes = FISH_DETECTOR.detect_image(im, score_thr=0.4)
+
+                output_df = pd.DataFrame({
+                    "objectid": [int(i) for i in boxes.keys()],
+                    "cropnumber": [int(i) for i in boxes.keys()],
+                    "min_x": [boxes[i][1] for i in boxes.keys()],
+                    "min_y": [boxes[i][0] for i in boxes.keys()],
+                    "max_x": [boxes[i][3] for i in boxes.keys()], 
+                    "max_y": [boxes[i][2] for i in boxes.keys()],
+                    "length": '',
+                    "lengthunits": ''
+                })
 
 
             # save marked photo

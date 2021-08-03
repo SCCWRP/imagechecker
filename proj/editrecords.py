@@ -15,7 +15,7 @@ def display_records(submissionid):
     if submissionid:
         session['submissionid'] = str(submissionid)
         rawdata = pd.read_sql(f"SELECT * FROM tbl_testfish WHERE submissionid = {submissionid}", current_app.eng)
-        data = htmltable(rawdata, cssclass="table", editable_fields=('length','width','area','speciesid'))
+        data = htmltable(rawdata, cssclass="table", editable_fields=('length','lengthunits','width','area','speciesid'))
 
         markedphotos = [
             ''.join([str(x).rsplit('.', 1)[0], '-marked.',str(x).rsplit('.', 1)[-1]]) for x in rawdata.originalphoto.unique()
@@ -36,7 +36,7 @@ def savechanges():
     data.to_excel(os.path.join(os.getcwd(), "files", submissionid, "data", "data.xlsx"))
 
     htmlfile = open( os.path.join(os.getcwd(), "files", submissionid, "data", "data.html" ) , 'w')
-    htmlfile.write(htmltable(data, cssclass="table", editable_fields=('length','width','area','speciesid')))
+    htmlfile.write(htmltable(data, cssclass="table", editable_fields=('length','lengthunits','width','area','speciesid')))
     htmlfile.close()
     
     return jsonify(message="data saved successfully")
