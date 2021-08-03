@@ -6,3 +6,5 @@ testing
 proj/imgutils/saved_model
 proj/imgutils/fish_inception_v2_graph
 .vscode
+proj/__pycache__
+proj/utils/__pycache__

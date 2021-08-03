@@ -120,41 +120,23 @@ def upload():
         elif response.get("status") == "error":
             print("Error in the routine of processing the image - from the RabbitMQ consumer")
             raise Exception(response.get("errmsg"))
-    session['markedphotopath'] = response.get('markedphoto')
+    session['markedphotopath'] = response.get('markedphotopath')
     session['markedphoto'] = \
-        response.get('markedphoto').rsplit('/', 1)[-1] \
-        if response.get('markedphoto') is not None else ''
+        response.get('markedphotopath').rsplit('/', 1)[-1] \
+        if response.get('markedphotopath') is not None else ''
 
 
-
-
-    # ----------------------------------------- #
-
-
-    # data = pd.DataFrame({
-    #     "objectid"        : [i for i in range(max_cropnumber)],
-    #     "submissionid"      : [session['submissionid'] for i in range(max_cropnumber)],
-    #     "originalphotoname" : [session['originalphoto'] for i in range(max_cropnumber)],
-    #     "cropnumber"        : [i + 1 for i in range(max_cropnumber)]
-    # })
-    data = pd.DataFrame({
-        "objectid"   : [i for i in response.get("boundingboxes").keys()],
-        "cropnumber" : [i for i in response.get("boundingboxes").keys()],
-        "min_y"       : [round(response.get("boundingboxes").get(i)[0], 4) for i in response.get("boundingboxes").keys()],
-        "min_x"       : [round(response.get("boundingboxes").get(i)[1], 4) for i in response.get("boundingboxes").keys()],
-        "max_y"       : [round(response.get("boundingboxes").get(i)[2], 4) for i in response.get("boundingboxes").keys()],
-        "max_x"       : [round(response.get("boundingboxes").get(i)[3], 4) for i in response.get("boundingboxes").keys()]
-    }) \
-    .assign(
+    data = pd.DataFrame(response.get("data")) if response.get("data") else pd.DataFrame()
+    
+    data = data.assign(
         speciesid = "",
         submissionid = session.get('submissionid'),
         originalphoto = session.get('originalphoto'),
         **session.get('login_info')
     )
 
-    data.to_excel( os.path.join(session['submission_dir'], "data", "data.xlsx") )
-    
-    htmlfile = open( os.path.join(session['submission_dir'], "data", "data.html" ) , 'w')
+    data.to_excel( os.path.join(session.get('submission_dir'), "data", "data.xlsx") )
+    htmlfile = open( os.path.join(session.get('submission_dir'), "data", "data.html" ) , 'w')
     htmlfile.write(htmltable(data, cssclass="table", editable_fields=('length','width','area','speciesid')))
     htmlfile.close()
 

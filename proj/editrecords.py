@@ -18,7 +18,7 @@ def display_records(submissionid):
         data = htmltable(rawdata, cssclass="table", editable_fields=('length','width','area','speciesid'))
 
         markedphotos = [
-            ''.join([str(x).rsplit('.', 1)[0], '-marked.jpg']) for x in rawdata.originalphoto.unique()
+            ''.join([str(x).rsplit('.', 1)[0], '-marked.',str(x).rsplit('.', 1)[-1]]) for x in rawdata.originalphoto.unique()
         ]
         return render_template('editrecords.html', data=data, submissionid=submissionid, markedphotos=markedphotos)
     else:

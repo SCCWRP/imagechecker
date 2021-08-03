@@ -1,64 +1,12 @@
 #!/usr/bin/python3
 import numpy as np
-import tensorflow as tf
+import pandas as pd
 from PIL import Image
-import time, pika, json, cv2, os
+import time, pika, json, cv2, os, shutil
 import matplotlib.pyplot as plt
 
-class Object_Detector():
-    def __init__(self, model_path):
-        self.__load_model(model_path)
-        print('model loaded')
-
-    def __load_model(self, model_path):
-        self.detection_graph = tf.Graph()
-        with self.detection_graph.as_default():
-            od_graph_def = tf.GraphDef()
-            with tf.gfile.GFile(model_path, 'rb') as fid:
-                serialized_graph = fid.read()
-                od_graph_def.ParseFromString(serialized_graph)
-                tf.import_graph_def(od_graph_def, name='')
-
-        config = tf.ConfigProto()
-        #config.gpu_options.allow_growth= True
-
-        with self.detection_graph.as_default():
-            self.sess = tf.Session(config=config, graph=self.detection_graph)
-            self.image_tensor = self.detection_graph.get_tensor_by_name('image_tensor:0')
-            self.detection_boxes = self.detection_graph.get_tensor_by_name('detection_boxes:0')
-            self.detection_scores = self.detection_graph.get_tensor_by_name('detection_scores:0')
-            self.detection_classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
-            self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
-
-        # load label_dict
-        self.label_dict = {1: 'fish'}
-        
-        # warmup
-        self.detect_image(np.ones((600, 600, 3)))
-
-    def detect_image(self, image_np, score_thr=0.5, print_time=False):
-        image_w, image_h = image_np.shape[1], image_np.shape[0]
-    
-        # Actual detection.
-        t = time.time()
-        (boxes, scores, classes, num) = self.sess.run(
-          [self.detection_boxes, self.detection_scores, self.detection_classes, self.num_detections],
-          feed_dict={self.image_tensor: np.expand_dims(image_np, axis=0)})
-        if print_time:
-            print('detection time :', time.time()-t)
-        # Visualization of the results of a detection.
-        boxes = boxes[scores>score_thr]
-        boxes_dict = dict()
-        for i, box in enumerate(boxes):
-            boxes_dict[i] = [float(x) for x in box]
-            top_left = (int(box[1]*image_w), int(box[0]*image_h))
-            bottom_right = (int(box[3]*image_w), int(box[2]*image_h))
-            cv2.rectangle(image_np, top_left, bottom_right, (0,255,0), 3)
-            cv2.putText(image_np, "{}_{}".format(self.label_dict[int(classes[0,i])], i), top_left, cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
-
-        return image_np, boxes_dict
-
-
+from utils.html import htmltable
+from contours import Contour, Object_Detector
 
 def listen():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
@@ -66,8 +14,6 @@ def listen():
 
     channel.queue_declare(queue='obj_detector')
 
-    MODEL_PATH = '/var/www/imagechecker/proj/imgutils/fish_inception_v2_graph/frozen_inference_graph.pb'
-    object_detector = Object_Detector(MODEL_PATH)
 
     # The callback function will be the full reformatting routine
     def callback(ch, method, properties, body):
@@ -76,27 +22,104 @@ def listen():
             data = json.loads(body)
             # Make the green box around the image
 
-            img = cv2.imread(os.path.join(data.get("submission_dir"), data.get("originalphoto")))
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img_, boxes = object_detector.detect_image(img, score_thr=0.2)
+            FISH_DETECTOR = Object_Detector('/var/www/imagechecker/proj/imgutils/fish_inception_v2_graph/frozen_inference_graph.pb')
 
-            print("boxes")
-            print(boxes)
-
+            originalphotopath = os.path.join(data.get('submission_dir'), data.get('originalphoto'))
+            
             markedphotopath = os.path. \
             join(
                 data.get("submission_dir"), 
-                "{}-marked.jpg".format(data.get('originalphoto').rsplit('.',1)[0])
+                "{}-marked.{}" \
+                .format(
+                    data.get('originalphoto').rsplit('.',1)[0],
+                    data.get('originalphoto').rsplit('.',1)[-1]
+                )
             )
 
-            cv2.imwrite(markedphotopath, img_)
+            shutil.copy(originalphotopath, markedphotopath)
+            
+            img = cv2.imread(markedphotopath)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+            ret, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
+
+            # Grab contours
+            contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+            # filter down to ones between 200 and 2000 points, making the assumption that all else is pure noise
+            contours = [c for c in contours if (200 < len(c) < 2000)]
+
+            # Mark contours of interest on the image
+            cv2.drawContours(img, contours, -1, (0,255,0), 1)
+
+            # Now the contours will become our customized Contour object
+            contours = [
+                Contour(
+                    points = c.reshape(c.shape[0],c.shape[-1]), 
+                    original_image = img, 
+                    output_photo_path = markedphotopath,
+                    detector = FISH_DETECTOR
+                ) 
+                for c in contours
+            ]
+
+            # Should be self explanatory
+            circles = [c for c in contours if c.isCircle()]
+            fish = [c for c in contours if (c.containsFish() and (not c.isCircle()) )]
+
+            # initialize the dataframe that we will append to
+            output_df = pd.DataFrame({"objectid" : [], "cropnumber" : [], "min_y" : [], "min_x" : [], "max_y" : [], "max_x" : [], "length": [], "lengthunits": []}) 
+
+            # We are making an assumption that the circle contour is a quarter
+            if len(circles) != 1:
+                print("unable to measure")
+                cm_pixel_ratio = 1 # default placeholder. Not even sure if this should be here
+                lengthunits = "px"
+            else: 
+                cm_pixel_ratio = 2.426 / circles[0].getLength() # We assume the circle contour is a quarter, which is 2.426cm in diameter
+                lengthunits = "cm"
+
+            # fc = fish contour
+            for i, fc in enumerate(fish):
+                fc.markBoundingBox()
+                fc.drawLength()
+                cv2.putText(
+                    img, 
+                    "fish {}".format(int(i)), 
+                    fc.length_coords[1], 
+                    cv2.FONT_HERSHEY_PLAIN, 
+                    1, 
+                    (0,0,255), 
+                    2
+                )
+                output_df = pd.concat(
+                    [
+                        output_df,
+                        pd.DataFrame({
+                            "objectid": [int(i)],
+                            "cropnumber": [int(i)],
+                            "min_x": [fc._min_x],
+                            "min_y": [fc._min_y],
+                            "max_x": [fc._max_x], 
+                            "max_y": [fc._max_y],
+                            "length": [round(fc.getLength() * cm_pixel_ratio, 2)],
+                            "lengthunits": lengthunits
+                        })
+                    ],
+                    ignore_index = True
+                )
+
+
+            # save marked photo
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            cv2.imwrite(markedphotopath, img)
 
             f = open(os.path.join(data.get("submission_dir"), "status.json"), 'w')
             f.write(
                 json.dumps({
                     "status": "done",
-                    "boundingboxes": boxes,
-                    "markedphoto": markedphotopath
+                    "markedphotopath": markedphotopath,
+                    "data": output_df.to_dict()
                 })
             )
             f.close()
