@@ -1,3 +1,3 @@
-# Data Checker
+# Image Checker
 
-The SCCWRP Flask app data checker which now uses more optimized code to check, which should allow for faster data checking. 
+A small flask app intended to extract data from images - identification of species, counts, and measurements when appropriate
