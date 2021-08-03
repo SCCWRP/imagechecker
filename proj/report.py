@@ -4,9 +4,12 @@ import os
 report = Blueprint('report', __name__)
 @report.route('/report',methods = ['GET','POST'])
 def getreport():
-    htmlfile = open( os.path.join(session['submission_dir'], "data", "data.html" ) , 'r')
-    data = htmlfile.read()
-    htmlfile.close()
+    try:
+        htmlfile = open( os.path.join(session['submission_dir'], "data", "data.html" ) , 'r')
+        data = htmlfile.read()
+        htmlfile.close()
+    except FileNotFoundError:
+        data = ""
 
     if session.get('markedphoto'):
         return render_template(
@@ -17,4 +20,4 @@ def getreport():
             data = data
         )
     else:
-        return "No possible codes found" 
+        return "Unable to obtain data from image" 
